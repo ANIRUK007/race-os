@@ -1,0 +1,3 @@
+# Owner review required for CI/workflow files, so a contributor cannot change
+# what runs on the VM. Takes effect once branch protection is enabled.
+/.github/    @ANIRUK007
