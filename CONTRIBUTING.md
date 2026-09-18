@@ -49,9 +49,11 @@ The VM looks for two optional files at the repo root.
 Both run with the repo root as the working directory. `run.sh` currently starts
 a Python HTTP server on port 8080 serving `public/`.
 
-If `deploy.sh` exits non-zero the deploy is logged as failed and the old service
-keeps running — so a broken build does not take the service down, but it also
-means **a green PR is not proof the deploy worked.** Check after merging.
+If `deploy.sh` exits non-zero, the VM rolls the checkout back to the previous
+commit and does not restart the service — a broken build cannot take the running
+service down. The VM retries on the next cycle, so it recovers on its own once
+you push a fix. But it also means **a merged PR is not proof the deploy worked.**
+Check after merging.
 
 ## Test before you open the PR
 
