@@ -81,8 +81,11 @@ grub-mkconfig -o /boot/grub/grub.cfg
 passwd -l root
 useradd -m -G wheel -s /bin/bash ${USERNAME}
 passwd -l ${USERNAME}
-echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/wheel
-chmod 0440 /etc/sudoers.d/wheel
+# 00- prefix matters: sudo applies the LAST matching rule, and sudoers.d is read
+# in lexical order. A general "%wheel ALL" placed after a NOPASSWD rule silently
+# overrides it, which also trips pam_faillock once automation starts failing.
+echo "%wheel ALL=(ALL:ALL) ALL" > /etc/sudoers.d/00-wheel
+chmod 0440 /etc/sudoers.d/00-wheel
 
 install -d -m 700 -o ${USERNAME} -g ${USERNAME} /home/${USERNAME}/.ssh
 echo '${SSHKEY}' > /home/${USERNAME}/.ssh/authorized_keys
