@@ -11,7 +11,7 @@
 set -euo pipefail
 
 DISK=${DISK:-/dev/sda}
-HOSTNAME=${HOSTNAME:-racedev}
+RACE_HOSTNAME=${RACE_HOSTNAME:-racedev}
 USERNAME=${USERNAME:-anirudh}
 SSHKEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEqa1ffNIVznHRyzfoVegmDmSdp9t8DsH9L4lfyUPa5G tericsoft@Tericsofts-MacBook-Air.local'
 
@@ -64,11 +64,11 @@ hwclock --systohc
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
-echo "${HOSTNAME}" > /etc/hostname
+echo "${RACE_HOSTNAME}" > /etc/hostname
 cat > /etc/hosts <<HOSTS
 127.0.0.1   localhost
 ::1         localhost
-127.0.1.1   ${HOSTNAME}.localdomain ${HOSTNAME}
+127.0.1.1   ${RACE_HOSTNAME}.localdomain ${RACE_HOSTNAME}
 HOSTS
 
 mkinitcpio -P
