@@ -18,18 +18,18 @@ SSHKEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEqa1ffNIVznHRyzfoVegmDmSdp9t8DsH9L4
 say() { printf '\n=== %s ===\n' "$*"; }
 
 [ -b "$DISK" ] || { echo "no such disk: $DISK" >&2; exit 1; }
-[ -d /sys/firmware/efi ] || { echo "not booted in UEFI mode" >&2; exit 1; }
 
-say "partitioning $DISK"
+# BIOS/GPT. VirtualBox's EFI implementation hangs this guest during early boot,
+# so the dev VM uses legacy BIOS + GRUB. Real-hardware UEFI images are tested in
+# QEMU with OVMF instead, which is where ISO boot testing belongs anyway.
+say "partitioning $DISK (BIOS/GPT)"
 sgdisk --zap-all "$DISK"
-sgdisk -n1:0:+1G -t1:ef00 -c1:EFI "$DISK"
+sgdisk -n1:0:+1M -t1:ef02 -c1:BIOSBOOT "$DISK"
 sgdisk -n2:0:0   -t2:8304 -c2:ROOT "$DISK"
 partprobe "$DISK"; sleep 2
 
-ESP=${DISK}1
 ROOT=${DISK}2
 
-mkfs.fat -F32 -n EFI "$ESP"
 mkfs.btrfs -f -L RACEDEV "$ROOT"
 
 # Subvolume layout matches the snapper convention so snapshots/rollback work later.
@@ -45,7 +45,6 @@ mount -o "$OPTS,subvol=@home"      "$ROOT" /mnt/home
 mount -o "$OPTS,subvol=@log"       "$ROOT" /mnt/var/log
 mount -o "$OPTS,subvol=@pkg"       "$ROOT" /mnt/var/cache/pacman/pkg
 mount -o "$OPTS,subvol=@snapshots" "$ROOT" /mnt/.snapshots
-mount "$ESP" /mnt/boot
 
 say "pacstrap base system"
 pacstrap -K /mnt \
@@ -53,14 +52,12 @@ pacstrap -K /mnt \
   sudo openssh networkmanager tailscale \
   python python-pip git base-devel \
   vim nano man-db jq ripgrep fd fzf htop \
-  efibootmgr
+  grub
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
 say "configuring system"
-ROOT_UUID=$(blkid -s UUID -o value "$ROOT")
-
-arch-chroot /mnt /bin/bash -euo pipefail <<CHROOT
+DISK="$DISK" arch-chroot /mnt /bin/bash -euo pipefail <<CHROOT
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 hwclock --systohc
 
@@ -76,20 +73,9 @@ HOSTS
 
 mkinitcpio -P
 
-# systemd-boot: ESP is mounted at /boot so kernels land on it directly.
-bootctl install
-cat > /boot/loader/loader.conf <<LOADER
-default arch.conf
-timeout 1
-console-mode max
-editor no
-LOADER
-cat > /boot/loader/entries/arch.conf <<ENTRY
-title   Race OS dev (Arch)
-linux   /vmlinuz-linux
-initrd  /initramfs-linux.img
-options root=UUID=${ROOT_UUID} rootflags=subvol=@ rw
-ENTRY
+grub-install --target=i386-pc ${DISK}
+sed -i 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=1/' /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
 
 # Locked passwords: nothing crackable ships in a public repo.
 passwd -l root
