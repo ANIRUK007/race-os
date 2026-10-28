@@ -13,7 +13,7 @@ set -euo pipefail
 DISK=${DISK:-/dev/sda}
 RACE_HOSTNAME=${RACE_HOSTNAME:-racedev}
 USERNAME=${USERNAME:-anirudh}
-SSHKEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEqa1ffNIVznHRyzfoVegmDmSdp9t8DsH9L4lfyUPa5G tericsoft@Tericsofts-MacBook-Air.local'
+SSHKEY='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICLHKwwMURvNRDZC6psxRQP4jAr8zSKBLoHY4Wvx0fAG anirudh@Anirudh-MacBook-Air.local'
 
 say() { printf '\n=== %s ===\n' "$*"; }
 
