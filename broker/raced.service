@@ -1,0 +1,16 @@
+# systemd USER unit: the socket lives in $XDG_RUNTIME_DIR and fs/proc act as
+# the logged-in user. Privileged capabilities (pkg.*) will need a separate
+# root-side helper; they must not be added to this process.
+#
+# Install:  install -Dm644 raced.service ~/.config/systemd/user/raced.service
+#           systemctl --user enable --now raced
+[Unit]
+Description=Race OS system broker (MCP over Unix socket)
+
+[Service]
+ExecStart=/usr/bin/python3 %h/.local/lib/race/raced.py
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
